@@ -10,16 +10,4 @@ package model;
  */
 public class Edge {
 
-
-    private int  weight;        //weight respectively costs of using edge
-    private Node prevNode;        //previous note of edge
-    private Node followNode;    //following note of edge
-
-    //Konstruktor
-
-    Edge( int theWeight, Node thePrevNode, Node theFollowNode ) {
-        this.weight = theWeight;
-        this.prevNode = thePrevNode;
-        this.followNode = theFollowNode;
-    }
 }
