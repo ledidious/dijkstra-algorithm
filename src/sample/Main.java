@@ -3,14 +3,15 @@ package sample;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Paint;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.Stack;
 
 public class Main extends Application {
 
@@ -22,26 +23,41 @@ public class Main extends Application {
 
     private List<Edge> edges;
 
+    private PriorityQueue<Node> priorityQueue;
+
+    private Stack<Node> outgoingNodes;
+
+    /**
+     * Die Knoten, die bereits bearbeitet wurden und von denen keine ausgehenden Kanten verlaufen.
+     */
+    private Set<Node> impassedNodes;
+
     public Main() {
         nodes = new ArrayList<>();
         edges = new ArrayList<>();
+        priorityQueue = new PriorityQueue<>( Comparator.comparing( Node :: getWeight ) );
+
+        outgoingNodes = new Stack<>();
+        impassedNodes = new HashSet<>();
     }
 
     @Override
     public void start( Stage primaryStage ) {
 
+        // Prepare
+
         rootPane = new Pane();
         primaryStage.setTitle( "Hello World" );
         primaryStage.setScene( new Scene( rootPane, 500, 500 ) );
 
-        final Node nodeS = addNodeX( "S", 20, 100 );
+        final Node nodeS = addNode( "S", 20, 100 );
         Node.setAsStartNode( nodeS );
 
-        final Node nodeU = addNodeX( "U", 100, 20 );
-        final Node nodeX = addNodeX( "X", 140, 120 );
-        final Node nodeV = addNodeX( "V", 200, 20 );
+        final Node nodeU = addNode( "U", 100, 20 );
+        final Node nodeX = addNode( "X", 140, 120 );
+        final Node nodeV = addNode( "V", 200, 20 );
         Node.setAsTargetNode( nodeV );
-        final Node nodeY = addNodeX( "Y", 240, 120 );
+        final Node nodeY = addNode( "Y", 240, 120 );
 
         addEdge( 5, nodeS, nodeX );
         addEdge( 10, nodeS, nodeU );
@@ -50,23 +66,58 @@ public class Main extends Application {
         addEdge( 2, nodeX, nodeY );
         addEdge( 6, nodeV, nodeY );
 
-        //        final Circle nodeS = addNode( 20, 100, "0" );
-        //        final Circle nodeU = addNode( 100, 20, STRING_INFINITE );
-        //        final Circle nodeX = addNode( 140, 120, STRING_INFINITE );
-        //        final Circle nodeV = addNode( 200, 20, STRING_INFINITE );
-        //        final Circle nodeY = addNode( 240, 120, STRING_INFINITE );
-        //
-        //        connectNode( nodeS, nodeX, 5 );
-        //        connectNode( nodeS, nodeU, 10 );
-        //        connectNode( nodeX, nodeU, 3 );
-        //        connectNode( nodeU, nodeV, 1 );
-        //        connectNode( nodeX, nodeY, 2 );
-        //        connectNode( nodeV, nodeY, 6 );
-
         primaryStage.show();
+
+        // Implementation
+        priorityQueue.addAll( nodes );
+
+        doDijkstra( Node.startNode, 0 );
     }
 
-    private Node addNodeX( String id, int x, int y ) {
+    private void doDijkstra( Node outgoingNode, int recursion ) {
+        Edge minEdge = null;
+
+        for( Node neighbourNode : outgoingNode.getNeighbourNodes() ) {
+            final Edge edge = outgoingNode.getEdgeToNode( neighbourNode );
+
+            neighbourNode.setWeight( outgoingNode.getWeight() + edge.getWeight() );
+
+            if( minEdge == null ) {
+                minEdge = edge;
+            }
+            else {
+                if( edge.getWeight() < minEdge.getWeight() ) {
+                    minEdge = edge;
+                }
+            }
+        }
+
+        if( minEdge == null ) {
+            outgoingNodes.pop();
+            impassedNodes.add( outgoingNode );
+        }
+        else {
+            final Node newOutgoingNode = minEdge.getFollowNode();
+            if( newOutgoingNode == null ) {
+                outgoingNodes.pop();
+                impassedNodes.add( outgoingNode );
+            }
+            else {
+                outgoingNodes.push( newOutgoingNode );
+                doDijkstra( newOutgoingNode, recursion + 1 );
+                return;
+            }
+        }
+
+        outgoingNode = outgoingNodes.peek();
+        for( Edge edge : outgoingNode.getOutgoingEdges() ) {
+            if( ! impassedNodes.contains( edge.getFollowNode() ) ) {
+                doDijkstra( edge.getFollowNode(), recursion + 1 );
+            }
+        }
+    }
+
+    private Node addNode( String id, int x, int y ) {
 
         final Node node = new Node( id );
         node.setX( x );
@@ -88,49 +139,6 @@ public class Main extends Application {
         rootPane.getChildren().add( edge.getText() );
 
         edges.add( edge );
-    }
-
-    private Circle addNode( int x, int y, String value ) {
-
-        final Circle circle = new Circle( 20 );
-        circle.setFill( Paint.valueOf( "white" ) );
-        circle.setStroke( Paint.valueOf( "black" ) );
-        circle.setLayoutX( x );
-        circle.setLayoutY( y );
-
-        final Text text = new Text();
-        text.setText( value );
-        text.setX( x - 8 );
-        text.setY( y + 2 );
-
-        rootPane.getChildren().add( circle );
-        rootPane.getChildren().add( text );
-
-        return circle;
-    }
-
-    private void connectNode( Circle fromNode, Circle toNode, int value ) {
-
-        final Line line = new Line();
-
-        if( fromNode.getLayoutX() > toNode.getLayoutX() ) {
-            final Circle temp = fromNode;
-            fromNode = toNode;
-            toNode = temp;
-        }
-
-        line.setStartX( fromNode.getLayoutX() + fromNode.getRadius() );
-        line.setStartY( fromNode.getLayoutY() );
-
-        line.setEndX( toNode.getLayoutX() - toNode.getRadius() );
-        line.setEndY( toNode.getLayoutY() );
-
-        final Text text = new Text( Integer.toString( value ) );
-        text.setX( line.getStartX() + ( line.getEndX() - line.getStartX() ) / 2 );
-        text.setY( line.getStartY() + ( line.getEndY() - line.getStartY() ) / 2 );
-
-        rootPane.getChildren().add( line );
-        rootPane.getChildren().add( text );
     }
 
     public static void main( String[] args ) {

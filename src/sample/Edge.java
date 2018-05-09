@@ -43,6 +43,8 @@ public class Edge extends Line {
 
         this.text = new Text( Integer.toString( theWeight ) );
 
+        thePrevNode.connectNode( theFollowNode, this );
+
         if( thePrevNode.getLayoutX() > theFollowNode.getLayoutX() ) {
             final Node temp = thePrevNode;
             thePrevNode = theFollowNode;
@@ -61,5 +63,26 @@ public class Edge extends Line {
 
     public Text getText() {
         return text;
+    }
+
+    public Node getPrevNode() {
+        return prevNode;
+    }
+
+    public Node getFollowNode() {
+        return followNode;
+    }
+
+    public int getWeight() {
+        return weight;
+    }
+
+    @Override
+    public String toString() {
+        return "Edge{" +
+                "weight=" + weight +
+                ", prevNode=" + prevNode +
+                ", followNode=" + followNode +
+                '}';
     }
 }

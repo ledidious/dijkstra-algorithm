@@ -4,7 +4,11 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class Node extends Circle {
 
@@ -25,10 +29,7 @@ public class Node extends Circle {
      */
     private int weight;
 
-    /**
-     * list of connected notes
-     */
-    private List<Node> connectedNodes;
+    private Map<Node, Edge> edges;
 
     /**
      * The text node containing the {@link #weight}.
@@ -43,6 +44,7 @@ public class Node extends Circle {
 
         this.ID = thisID;
         this.text = new Text();
+        this.edges = new HashMap<>();
 
         setFill( Paint.valueOf( "white" ) );
         setStroke( Paint.valueOf( "black" ) );
@@ -68,11 +70,8 @@ public class Node extends Circle {
     // Object methods
     // ======================================================
 
-    /**
-     * Adds a connected node to the list of {@link #connectedNodes}.
-     */
-    public void addConnectedNode( Node connectedNode ) {
-        connectedNodes.add( connectedNode );
+    public void connectNode( Node otherNode, Edge edge ) {
+        edges.put( otherNode, edge );
     }
 
     public void setX( int x ) {
@@ -91,7 +90,7 @@ public class Node extends Circle {
     }
 
     public void setWeightUndefined() {
-        this.weight = - 1;
+        this.weight = Integer.MAX_VALUE;
         text.setText( STRING_INFINITE );
     }
 
@@ -101,5 +100,25 @@ public class Node extends Circle {
 
     public Text getText() {
         return text;
+    }
+
+    public Edge getEdgeToNode( Node node ) {
+        return edges.get( node );
+    }
+
+    public List<Edge> getOutgoingEdges() {
+        return new ArrayList<>( edges.values() );
+    }
+
+    public Set<Node> getNeighbourNodes() {
+        return edges.keySet();
+    }
+
+    @Override
+    public String toString() {
+        return "Node{" +
+                "ID='" + ID + '\'' +
+                ", weight=" + weight +
+                '}';
     }
 }
