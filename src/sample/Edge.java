@@ -1,5 +1,7 @@
 package sample;
 
+import javafx.scene.paint.Paint;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 
@@ -33,6 +35,8 @@ public class Edge extends Line {
      */
     private Text text;
 
+    private final Circle endPoint;
+
     /**
      * Konstruktor
      */
@@ -43,7 +47,7 @@ public class Edge extends Line {
 
         this.text = new Text( Integer.toString( theWeight ) );
 
-        thePrevNode.connectNode( theFollowNode, this );
+        thePrevNode.connectNode( this );
 
         if( thePrevNode.getLayoutX() > theFollowNode.getLayoutX() ) {
             final Node temp = thePrevNode;
@@ -59,10 +63,20 @@ public class Edge extends Line {
 
         text.setX( getStartX() + ( getEndX() - getStartX() ) / 2 );
         text.setY( getStartY() + ( getEndY() - getStartY() ) / 2 );
+
+        // Angle
+        endPoint = new Circle( 3 );
+        endPoint.setLayoutX( getEndX() );
+        endPoint.setLayoutY( getEndY() );
+        endPoint.setFill( Paint.valueOf( "black" ) );
     }
 
     public Text getText() {
         return text;
+    }
+
+    public Circle getEndPoint() {
+        return endPoint;
     }
 
     public Node getPrevNode() {

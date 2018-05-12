@@ -4,11 +4,10 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.PriorityQueue;
 
 public class Node extends Circle {
 
@@ -16,8 +15,6 @@ public class Node extends Circle {
     public static Node startNode  = null;
 
     private static final String STRING_INFINITE = "\u221E";
-
-    private static int quantityNodes = 0;
 
     /**
      * ID respectively name of the node
@@ -29,12 +26,14 @@ public class Node extends Circle {
      */
     private int weight;
 
-    private Map<Node, Edge> edges;
+    private PriorityQueue<Edge> edges;
 
     /**
-     * The text node containing the {@link #weight}.
+     * The text element containing the {@link #weight}.
      */
-    private Text text;
+    private Text valueText;
+
+    private Text idText;
 
     /**
      * Konstruktor
@@ -43,15 +42,14 @@ public class Node extends Circle {
         super( 20 );
 
         this.ID = thisID;
-        this.text = new Text();
-        this.edges = new HashMap<>();
+        this.valueText = new Text();
+        this.idText = new Text( thisID );
+        this.edges = new PriorityQueue<>( Comparator.comparing( Edge :: getWeight ) );
 
         setFill( Paint.valueOf( "white" ) );
         setStroke( Paint.valueOf( "black" ) );
 
         setWeightUndefined();
-
-        quantityNodes++;
     }
 
     // Static methods
@@ -70,48 +68,46 @@ public class Node extends Circle {
     // Object methods
     // ======================================================
 
-    public void connectNode( Node otherNode, Edge edge ) {
-        edges.put( otherNode, edge );
+    public void connectNode( Edge edge ) {
+        edges.add( edge );
     }
 
     public void setX( int x ) {
-        text.setX( x - 8 );
+        idText.setX( x - 8 );
+        valueText.setX( x - 8 );
         setLayoutX( x );
     }
 
     public void setY( int y ) {
-        text.setY( y + 2 );
+        idText.setY( y - getRadius() - 5 );
+        valueText.setY( y + 2 );
         setLayoutY( y );
     }
 
     public void setWeight( int weight ) {
         this.weight = weight;
-        text.setText( Integer.toString( weight ) );
+        valueText.setText( Integer.toString( weight ) );
     }
 
     public void setWeightUndefined() {
         this.weight = Integer.MAX_VALUE;
-        text.setText( STRING_INFINITE );
+        valueText.setText( STRING_INFINITE );
     }
 
     public int getWeight() {
         return weight;
     }
 
-    public Text getText() {
-        return text;
+    public Text getIdText() {
+        return idText;
     }
 
-    public Edge getEdgeToNode( Node node ) {
-        return edges.get( node );
+    public Text getValueText() {
+        return valueText;
     }
 
     public List<Edge> getOutgoingEdges() {
-        return new ArrayList<>( edges.values() );
-    }
-
-    public Set<Node> getNeighbourNodes() {
-        return edges.keySet();
+        return new LinkedList<>( edges );
     }
 
     @Override
