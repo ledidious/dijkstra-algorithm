@@ -9,8 +9,13 @@ import javafx.stage.Stage;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Stack;
 
+/**
+ * Entry point and implementation of algorithm.
+ *
+ * @author Nils Terhart & Mario Gierke
+ * @version 1.2
+ */
 public class Main extends Application {
 
     // Attributes
@@ -21,21 +26,32 @@ public class Main extends Application {
      */
     private Pane rootPane;
 
-    private Stack<Node> outgoingNodes = new Stack<>();
-
-    private boolean waitForNextStep = false;
-
-    private Edge currentEdge = null;
-    private Node currentNode = null;
+    /**
+     * The list of outgoing nodes. Each of the edges starting from an outgoing node,
+     * are followed and checked for the shortest way to their neighbour nodes and their neighbours.
+     */
+    private Set<Node> outgoingNodes = new HashSet<>();
 
     /**
-     * Die Knoten, die bereits bearbeitet wurden und von denen keine ausgehenden Kanten verlaufen.
+     * Flag that controls execution of the next step after
+     * button "Next" has been clicked.
      */
-    private Set<Node> deadlockNodes = new HashSet<>();
+    private boolean execNextStep = false;
+
+    /**
+     * Current edge and node which are currently highlighted in green.
+     */
+    private Edge currentEdge = null;
+    private Node currentNode = null;
 
     // Static methods
     // ======================================================
 
+    /**
+     * Main program
+     *
+     * @param args arguments from command line
+     */
     public static void main( String[] args ) {
         launch( args );
     }
@@ -43,23 +59,36 @@ public class Main extends Application {
     // Object methods
     // ======================================================
 
+    /**
+     * Start method invoked from java fx.
+     *
+     * @param primaryStage the root gui container
+     */
     @Override
     public void start( Stage primaryStage ) {
 
+        /*
+         * Root panel
+         */
         rootPane = new Pane();
         primaryStage.setTitle( "Dijkstra Algorithmus" );
         primaryStage.setScene( new Scene( rootPane, 500, 500 ) );
 
         prepareGraph();
-        primaryStage.show();
 
+        /*
+         * Next button
+         */
         final Button nextButton = new Button( "Weiter" );
-        nextButton.setOnMouseClicked( event -> waitForNextStep = true );
+        nextButton.setOnMouseClicked( event -> execNextStep = true );
         nextButton.setLayoutX( 20 );
         nextButton.setLayoutY( 300 );
         nextButton.setDefaultButton( true );
         rootPane.getChildren().add( nextButton );
 
+        /*
+         * Exit button
+         */
         final Button exitButton = new Button( "Beenden" );
         exitButton.setLayoutX( 100 );
         exitButton.setLayoutY( 300 );
@@ -68,15 +97,25 @@ public class Main extends Application {
         exitButton.setVisible( false );
         rootPane.getChildren().add( exitButton );
 
+        /*
+         * Start algorithm in separate thread
+         */
         final Thread thread = new Thread( () -> {
-            doDijkstra( Node.startNode, 0 );
+            doDijkstra( Node.startNode );
             exitButton.setVisible( true );
             nextButton.setVisible( false );
         } );
         thread.setDaemon( true );
         thread.start();
+
+        // Display gui
+        primaryStage.show();
     }
 
+    /**
+     * Prepares the graph consisting from the different
+     * nodes and edges.
+     */
     private void prepareGraph() {
 
         final Node nodeS = addNode( "S", 40, 150 );
@@ -96,6 +135,15 @@ public class Main extends Application {
         addEdge( 6, nodeV, nodeY );
     }
 
+    /**
+     * Adds a new node to the graph and returns the node.
+     *
+     * @param id id of the node
+     * @param x  x position
+     * @param y  y position
+     *
+     * @return the node created
+     */
     private Node addNode( String id, int x, int y ) {
 
         final Node node = new Node( id );
@@ -110,6 +158,14 @@ public class Main extends Application {
         return node;
     }
 
+    /**
+     * Connects two nodes by creating an edge between them and inserting it
+     * in the graph.
+     *
+     * @param weight     the weight of the edge
+     * @param prevNode   the start node
+     * @param followNode the end node
+     */
     private void addEdge( int weight, Node prevNode, Node followNode ) {
 
         final Edge edge = new Edge( weight, prevNode, followNode );
@@ -120,15 +176,27 @@ public class Main extends Application {
         rootPane.getChildren().add( edge.getEndPoint() );
     }
 
-    private void doDijkstra( Node outgoingNode, int recursion ) {
+    /**
+     * Recursive Method that implements the actual dijkstra algorithm.
+     *
+     * @param outgoingNode the next outgoing node
+     */
+    private void doDijkstra( Node outgoingNode ) {
 
-        outgoingNodes.push( outgoingNode );
+        // If not already processed as outgoing node
+        if( outgoingNodes.contains( outgoingNode ) ) {
+            return;
+        }
+
+        // Add new outgoing node and highlight
+        outgoingNodes.add( outgoingNode );
         setCurrentEdgeAndNode( null, null );
-        highlightSpecialNodes();
+        highlightSpecialNodes( outgoingNode );
 
         waitForNextStep();
 
-        Edge minEdge = null;
+        // Iterate over outgoing edges and update neighbour's weight
+        // if lower than old weight
         for( Edge edge : outgoingNode.getOutgoingEdges() ) {
 
             final Node neighbourNode = edge.getFollowNode();
@@ -137,45 +205,21 @@ public class Main extends Application {
             }
 
             setCurrentEdgeAndNode( edge, neighbourNode );
-
-            if( minEdge == null ) {
-                minEdge = edge;
-            }
-            else {
-                if( edge.getWeight() < minEdge.getWeight() ) {
-                    minEdge = edge;
-                }
-            }
             waitForNextStep();
         }
 
-        if( minEdge == null ) {
-            outgoingNodes.pop();
-            deadlockNodes.add( outgoingNode );
-            highlightSpecialNodes();
-        }
-        else {
-            final Node newOutgoingNode = minEdge.getFollowNode();
-            if( newOutgoingNode == null ) {
-                outgoingNodes.pop();
-                deadlockNodes.add( outgoingNode );
-                highlightSpecialNodes();
-            }
-            else {
-                doDijkstra( newOutgoingNode, recursion + 1 );
-            }
-        }
-
-        outgoingNode = outgoingNodes.peek();
+        // Iterate over edges corresponding to the order of weights and
+        // take as next outgoing node
         for( Edge edge : outgoingNode.getOutgoingEdges() ) {
-            if( ! deadlockNodes.contains( edge.getFollowNode() ) ) {
-                doDijkstra( edge.getFollowNode(), recursion + 1 );
-            }
+            doDijkstra( edge.getFollowNode() );
         }
     }
 
+    /**
+     * Method that blocks as long as {@link #execNextStep} is {@code false}.
+     */
     private void waitForNextStep() {
-        while( ! waitForNextStep ) {
+        while( ! execNextStep ) {
             try {
                 Thread.sleep( 5 );
             }
@@ -183,22 +227,29 @@ public class Main extends Application {
                 throw new IllegalThreadStateException();
             }
         }
-        waitForNextStep = false;
+        // Reset flag because just one step executed at once
+        execNextStep = false;
     }
 
-    private void highlightSpecialNodes() {
+    /**
+     * Highlight all special nodes with different colors
+     *
+     * @param outgoingNode the current handled outgoing node
+     */
+    private void highlightSpecialNodes( Node outgoingNode ) {
         for( Node node : outgoingNodes ) {
-            node.setStroke( Paint.valueOf( "black" ) );
+            node.setStroke( Paint.valueOf( "Gold" ) );
         }
-        if( ! outgoingNodes.isEmpty() ) {
-            outgoingNodes.peek().setStroke( Paint.valueOf( "blue" ) );
-        }
-
-        for( Node node : deadlockNodes ) {
-            node.setStroke( Paint.valueOf( "red" ) );
-        }
+        outgoingNode.setStroke( Paint.valueOf( "blue" ) );
     }
 
+    /**
+     * Set edge and node that are currently checked and which will be
+     * highlighted in green after method invocation.
+     *
+     * @param edge current edge
+     * @param node current nod
+     */
     private void setCurrentEdgeAndNode( Edge edge, Node node ) {
         if( currentEdge != null ) {
             currentEdge.setStroke( Paint.valueOf( "black" ) );

@@ -5,16 +5,33 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.PriorityQueue;
 
+/**
+ * Represents the nodes in the graph that are connected by {@link Edge}s and
+ * each have a different distance relative to the {@link #startNode}.
+ *
+ * Extends gui element {@link Circle} because displayed by a circle in the gui.
+ *
+ * @author Nils Terhart & Mario Gierke
+ * @version 1.2
+ */
 public class Node extends Circle {
 
-    public static Node targetNode = null;
-    public static Node startNode  = null;
-
+    /**
+     * Infinite string '∞'
+     */
     private static final String STRING_INFINITE = "\u221E";
+
+    /**
+     * Which node is the target?
+     */
+    public static Node targetNode = null;
+
+    /**
+     * Which node marks the start where all ways to other nodes begin?
+     */
+    public static Node startNode = null;
 
     /**
      * ID respectively name of the node
@@ -26,6 +43,10 @@ public class Node extends Circle {
      */
     private int weight;
 
+    /**
+     * The edges which start from this node. Saved in a priority queue
+     * because the edges having a lower {@link Edge#weight}, are processed as first ones.
+     */
     private PriorityQueue<Edge> edges;
 
     /**
@@ -33,6 +54,9 @@ public class Node extends Circle {
      */
     private Text valueText;
 
+    /**
+     * The text element containing the {@link #id}.
+     */
     private Text idText;
 
     /**
@@ -55,11 +79,21 @@ public class Node extends Circle {
     // Static methods
     // ======================================================
 
+    /**
+     * Sets {@link #startNode}.
+     *
+     * @param node start node
+     */
     public static void setAsStartNode( Node node ) {
         node.setWeight( 0 );
         startNode = node;
     }
 
+    /**
+     * Sets {@link #targetNode}.
+     *
+     * @param node target node
+     */
     public static void setAsTargetNode( Node node ) {
         node.setWeightUndefined();
         targetNode = node;
@@ -68,8 +102,16 @@ public class Node extends Circle {
     // Object methods
     // ======================================================
 
+    /**
+     * Connects two nodes with the declared {@code edge} and adds
+     * the edge to {@link #edges} if this node is the start node.
+     *
+     * @param edge a connecting edge.
+     */
     public void connectNode( Edge edge ) {
-        edges.add( edge );
+        if( edge.getPrevNode().equals( this ) ) {
+            edges.add( edge );
+        }
     }
 
     public void setX( int x ) {
@@ -106,8 +148,8 @@ public class Node extends Circle {
         return valueText;
     }
 
-    public List<Edge> getOutgoingEdges() {
-        return new LinkedList<>( edges );
+    public PriorityQueue<Edge> getOutgoingEdges() {
+        return edges;
     }
 
     @Override

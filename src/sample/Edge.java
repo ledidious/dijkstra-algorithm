@@ -6,12 +6,11 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 
 /**
- * CLASS NODE
- * DIJKSTRA
+ * An edge connecting different {@link Node}s. Extends gui element {@link Line}
+ * because displayed by a line in the gui.
  *
  * @author Nils Terhart & Mario Gierke
- * @version 1.0
- * @return value of node
+ * @version 1.2
  */
 public class Edge extends Line {
 
