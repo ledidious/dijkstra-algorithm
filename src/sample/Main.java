@@ -218,6 +218,7 @@ public class Main extends Application {
     /**
      * Method that blocks as long as {@link #execNextStep} is {@code false}.
      */
+    @SuppressWarnings("BusyWait")
     private void waitForNextStep() {
         while( ! execNextStep ) {
             try {
