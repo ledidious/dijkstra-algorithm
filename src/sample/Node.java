@@ -13,7 +13,7 @@ import java.util.PriorityQueue;
  *
  * Extends gui element {@link Circle} because displayed by a circle in the gui.
  *
- * @author Nils Terhart & Mario Gierke
+ * @author ledidious & marisbeautypalace
  * @version 1.2
  */
 public class Node extends Circle {

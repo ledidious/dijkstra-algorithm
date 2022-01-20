@@ -9,7 +9,7 @@ import javafx.scene.text.Text;
  * An edge connecting different {@link Node}s. Extends gui element {@link Line}
  * because displayed by a line in the gui.
  *
- * @author Nils Terhart & Mario Gierke
+ * @author ledidious & marisbeautypalace
  * @version 1.2
  */
 public class Edge extends Line {

@@ -13,7 +13,7 @@ import java.util.Set;
 /**
  * Entry point and implementation of algorithm.
  *
- * @author Nils Terhart & Mario Gierke
+ * @author ledidious & marisbeautypalace
  * @version 1.2
  */
 public class Main extends Application {
